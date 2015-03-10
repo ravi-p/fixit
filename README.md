@@ -1,5 +1,5 @@
 # fixit
-fixit app to raise tickits related to some issues or requirement
+fixit app to raise tickets related to some issues or requirement
 
 Currently infra app is not registered,No need. taskq app works for both "infrasture" and "housekeeping both"
 
