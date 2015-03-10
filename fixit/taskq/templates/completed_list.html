@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{%load common_tags%}
+
+{% block content %}
+<!-- ++++++++++++++++  complete task  ++++++++++++++++++  --> 
+
+    <div class="well well-lg" id="ctask-div">
+            <h4 style='color:green;'>
+                Completed Tasks
+                <span class="pull-right">
+                    <small title="{{week_done_cnt}} out of {{week_cnt}} tasks complete.">
+                        <i style="font-size:14px;">Weekly Fixit Rate: {{task_done_rate}}</i>
+                    </small>
+                </span>
+            </h4>
+
+        {%if c_tasks%}
+            <input type="hidden" id="uri" name="variable" value="{{target}}">
+            <table class="table table-condensed" id="task-list-table">
+                <thead>
+                    <th width="10%"><b>Time to fix</b></th>
+                    <th width="15%"><b>Location</b></th>
+                    <th width="42%"><b>Title</b></th>
+                    <th width="8%"><b>Priority</b></th>
+                    <th width=""><b>Actions</b></th>
+                    {%if request.user.is_superuser or request.user.is_staff%}
+                    {%endif%}
+                </thead>
+            </table>
+
+
+            <div id="divtablecontent" onscroll="scrollalert()">
+                <table class="table table-bordered" id="full-table">
+                    <tbody id="table-body">
+                    {% include 'completed_list_table_row.html' %}
+                    </tbody>
+                </table>
+                <br/><br/>
+        </div>
+            <br/>
+        {%else%}
+            No complete tasks found.
+        {%endif%}
+    </div>
+
+{% endblock content %}
+
+
+{% block extra_js %}
+    <script src="{{STATIC_URL}}js/custom.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function(){
+        $("tr").dblclick(function(){ 
+           var taskid = this.id;
+           window.location = "/{{namespace}}/clist/" + taskid; 
+        });
+
+
+    });
+    </script>
+{% endblock extra_js %}

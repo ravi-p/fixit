@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{%load common_tags%}
+
+{% block content %}
+
+    <div class="well well-lg" id="ptask-div-repeat">
+        <h4 style='color:red;'>Repeatable Task Log</h4>
+        <hr/>
+        {% for key, RT in rtlog_dict.iteritems %}
+            <a href="{% namespace_url namespace 'task_details' key %}" title="{% show_task_desc key%}"
+            >Task-{{key}}</a>
+            &nbsp;&nbsp;
+            <span class="label label-success"><span class="badge">
+                {{RT.pass_cnt}}
+            </span></span> &nbsp;out of &nbsp;
+            <span class="label label-info"><span class="badge">
+                {{RT.total_cnt}}
+            </span></span> completed.
+
+            <br/><br/>
+            <div class="panel panel-default">
+                <div class="col-xs-6" style="background:#E5E4E2;">Target Time</div>
+                <div class="col-xs-6" style="background:#E5E4E2;">Comment</div>
+                <br/>
+                {% for rtl in RT.rtl_list %}
+                    <span class="col-xs-6">
+                        {{rtl.task_repeat_time}}
+                    </span>
+                    <span class="col-xs-6">
+                        {{rtl.comment}}
+                    </span>
+                    <br/>
+                {%endfor%}
+            </div>
+            <br/>
+            <hr />
+        {% endfor %}
+    </div>
+        {#% endfor %#}
+
+
+{%comment%}
+        <table class="table table-bordered">
+            <thead>
+                <th><h4><b>#</b></h4></th>
+                <th><h4><b>Location</b></h4></th>
+                <th><h4><b>Details</b></h4></th>
+                <th><h4><b>Priority</b></h4></th>
+                {%if request.user.is_superuser or request.user.is_staff%}
+                    <th></th>
+                {%endif%}
+            </thead>
+            <tbody>
+                {%for  task in ptask_list%}
+                    <tr {%if task.repeatable %} style="border-left: solid blue 2px;"{%endif%}>
+                        <td>
+                            <small>
+                                {% if task.repeatable %}
+                                    &nbsp;
+                                    <span class="glyphicon glyphicon-repeat"
+                                        style="color:blue; font-weight:bold;"
+                                        title="Timeout: {{task.repeat_time}}">
+                                    </span>&nbsp;
+                                    {%repeat_timesince task.id %}
+                                {% else %}
+                                    {{task.created|timesince}} ago 
+                                {%endif%}
+                            </small>
+                        </td>
+                {#%comment%#}
+                        <td>{{forloop.counter|add:ptask_list.next_page_number}}.</td>
+                {#%endcomment%#}
+                        <td>
+                            {{ task.get_floor_display }} 
+                            &nbsp; =&gt; &nbsp;
+                            {{ task.get_room_display }}
+                        </td>
+                        <td title="{{task.desc}}">
+                            {{task.desc|truncatechars:60}}
+                        </td>
+                        <td>
+                            {%if task.priority == '1' %}
+                                <span class="bg-blocker">
+                                    Blocker
+                                </span>
+                            {%elif task.priority == '2' %}
+                                <span class="bg-high">
+                                    High
+                                </span>
+                            {%elif task.priority == '3' %}
+                                <span class="bg-moderate">
+                                    Moderate
+                                </span>
+                            {%elif task.priority == '4' %}
+                                <span class="bg-low">
+                                    Low
+                                </span>
+                            {%elif task.priority == '5' %}
+                                <span class="bg-low">
+                                    Suggestion
+                                </span>
+                            {%endif%}
+                        </td>
+                        {%if request.user.is_superuser or request.user.is_staff%}
+                            <td>
+                                <a href="{%url 'edit_task' task.id%}">Edit </a>
+                                &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+                                <a title="Mark as done." href="{%url 'mark_task_complete' task.id%}">Done</a>
+                                {%if request.user.is_superuser%}
+                                    &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+                                    <a href="{%url 'delete_task' task.id%}">Delete </a>
+                                {%endif%}
+                            </td>
+                        {%endif%}
+                    </tr>         
+                {%endfor%}
+
+            </tbody>
+        </table>
+        <div class="pagination">
+            <span class="step-links">
+                {% if ptask_list.has_previous %}
+                    <a href="?page={{ ptask_list.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ ptask_list.number }} of {{ ptask_list.paginator.num_pages }}.
+                </span>
+
+                {% if ptask_list.has_next %}
+                    <a href="?page={{ ptask_list.next_page_number }}">next</a>
+                {% endif %}
+            </span>
+        </div>
+        <div class="pull-right"> 
+            <br/>
+            <a href="#top-btn">
+                <span class="glyphicon glyphicon-arrow-up"></span>
+            </a>
+        </div>
+
+    </div>
+{%endcomment%}
+
+
+
+{% endblock content %}

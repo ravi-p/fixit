@@ -1,0 +1,476 @@
+diff --git a/fixit/urls.py b/fixit/urls.py
+index 7c2c62e..dd7a22c 100644
+--- a/fixit/urls.py
++++ b/fixit/urls.py
+@@ -2,7 +2,6 @@ from django.conf.urls import patterns, include, url
+ from django.contrib import admin
+ from django.conf.urls import handler400, handler403
+ from django.conf.urls import handler404, handler500
+-from taskq.views import get_related_rooms
+ from django.views.generic import RedirectView
+ from django.views.generic import TemplateView
+ 
+@@ -19,7 +18,6 @@ urlpatterns = patterns('',
+     url(r'^admin/', include(admin.site.urls)),
+     url(r'', include('social_auth.urls')),
+     url(r'', include('django.contrib.auth.urls', namespace='auth')),
+-    url(r'^getroom/$', get_related_rooms, name='get_related_room'),
+     url(r'^accounts/login/$', TemplateView.as_view(template_name = 'login.html')),
+ )
+ 
+diff --git a/taskq/forms.py b/taskq/forms.py
+index 7c43780..be78599 100644
+--- a/taskq/forms.py
++++ b/taskq/forms.py
+@@ -2,19 +2,19 @@ from django import forms
+ import re
+ from models import TaskQ
+ from models import FLOOR_CHOICES, ROOM_CHOICES
+-from models import STATUS_CHOICES, PRIORITY_CHOICES
++from models import STATUS_CHOICES, PRIORITY_CHOICES,APP_CHOICES
+ from datetime import datetime
+ 
+ ground_val = "Invalid Room. Valid options are WC, Accounts, Server, Common Passage, Stairwell, Lift and Conference."
+ first_val = "Invalid Room. Valid options are First, Second, Third, WC, Common Passage, Stairwell, Lift and Conference"
+ second_val = third_val = first_val
+-pantry_val = "Invalid Room. Valid option is Lunch area"
++pantry_val = "Invalid Room. Valid option is sink, lunch area, barbeque area, table top & battery room"
+ all_val = "Invalid Room. Valid options are WC, Common Passage, Stairwell, Lift and Conference."
+ GF=['0', '4', '5', '6', '8', '9', '10']
+ FF=['0', '1', '2', '3', '4', '8', '9', '10']
+ SF=['0', '1', '2', '3', '4', '8', '9', '10']
+ TF=['0', '1', '2', '3', '4', '8', '9', '10']
+-PF=['7']
++PF=['7','11','12','13','14']
+ All=['0', '4', '8', '9', '10']
+ class TaskForm(forms.ModelForm):
+ 
+@@ -67,14 +67,6 @@ class TaskForm(forms.ModelForm):
+ 
+     def __init__(self, *args, **kwargs):
+         super(TaskForm, self).__init__(*args, **kwargs)
+-        try:
+-            EndIndex=int(self.initial['priority'])
+-        except KeyError:
+-            EndIndex=len(PRIORITY_CHOICES)
+-            pass
+-        self.fields['priority'] = forms.ChoiceField(label='Priority',required=True,\
+-             widget=forms.Select(attrs={'class': 'form-control'}),\
+-             choices=PRIORITY_CHOICES[:EndIndex])
+ 
+     def clean_floor(self):
+         if self.cleaned_data['floor']:
+@@ -159,25 +151,40 @@ class TaskForm(forms.ModelForm):
+         return self.cleaned_data
+ 
+ 
++from django.utils.safestring import mark_safe
++
++class HorizRadioRenderer(forms.RadioSelect.renderer):
++    """ this overrides widget method to put radio buttons horizontally
++        instead of vertically.
++    """
++    def render(self):
++            """Outputs radios"""
++            return mark_safe(u'\n'.join([u'%s\n' % w for w in self]))
++
++
+ class TaskAdminForm(TaskForm):
+     status = forms.CharField(label='Status',
+                 required=False,
+                 widget=forms.Select(attrs={'class': 'form-control',
+                 'placeholder': 'Select Status'}, choices=STATUS_CHOICES ))
++
++    app = forms.ChoiceField(required=True,widget=forms.RadioSelect(renderer=HorizRadioRenderer),choices=APP_CHOICES)
++
++
+     class Meta:
+         model = TaskQ
+-        exclude = ('created', 'modified', 'cuser', 'euser','app')
++        exclude = ('created', 'modified', 'cuser', 'euser')
+ 
+-    def clean_floor(self):
+-        if self.cleaned_data['floor']:
+-            if self.cleaned_data['floor'] == '-1':
+-                raise forms.ValidationError('Floor field is required.')
+-        return self.cleaned_data['floor']
++    def clean_app(self):
++        if self.cleaned_data['app']:
++            if self.cleaned_data['app'] not in ['infra','housekeep']:
++                raise forms.ValidationError('Invalid App')
++        return self.cleaned_data['app']
+ 
+ class TaskUpdateForm(TaskForm):
+     class Meta:
+         model=TaskQ
+-        exclude = ('created', 'modified', 'status', 'cuser', 'euser')
++        exclude = ('created', 'modified', 'status', 'cuser', 'euser','app')
+     def __init__(self, *args, **kwargs):
+         super(TaskUpdateForm, self).__init__(*args, **kwargs)
+         try:
+diff --git a/taskq/models.py b/taskq/models.py
+index 1081ba4..f1e52d4 100644
+--- a/taskq/models.py
++++ b/taskq/models.py
+@@ -21,10 +21,14 @@ ROOM_CHOICES = (
+         ('4', 'WC'),
+         ('5', 'Accounts'),
+         ('6', 'Server'),
+-        ('7', 'Lunch area'),
++        ('7', 'Lunch Area'),
+         ('8', 'Common Passage'),
+         ('9', 'Stairwell'),
+         ('10', 'Lift'),
++        ('11', 'Sink'),
++        ('12', 'Barbeque Area'),
++        ('13', 'Table Top'),
++        ('14', 'Battery Room'),
+ )
+ 
+ STATUS_CHOICES = (
+@@ -42,6 +46,10 @@ PRIORITY_CHOICES = (
+         ('5', 'Suggestion/Task'),
+ )
+ 
++APP_CHOICES = (
++        ('housekeep', 'Housekeeping'),
++        ('infra', 'Infrastructure'),
++)
+ class TaskQ(models.Model):
+     floor = models.CharField(max_length=255, choices=FLOOR_CHOICES, \
+             default='-1')
+@@ -60,7 +68,7 @@ class TaskQ(models.Model):
+     repeat_time = models.DateTimeField(null=True, blank=True)
+     cuser = models.IntegerField(null=True, blank=True)
+     euser = models.IntegerField(null=True, blank=True)
+-    app = models.CharField(max_length=20,default="housekeep")
++    app = models.CharField(max_length=20,default="housekeep",choices=APP_CHOICES)
+ 
+     class Meta:
+         permissions=(
+@@ -87,8 +95,9 @@ def save_task(**kwargs):
+         priority = kwargs['form_data']['priority']
+         repeatable = kwargs['form_data']['repeatable']
+         repeat_time = kwargs['form_data']['repeat_time']
++        app = kwargs['form_data']['app']
+         task = TaskQ.objects.create(floor=floor, room=room, title=title,desc=desc, \
+-                repeatable=repeatable, repeat_time=repeat_time, \
++                repeatable=repeatable, repeat_time=repeat_time, app = app,\
+                 priority=priority)
+     except Exception, msg:
+         raise
+@@ -110,6 +119,7 @@ def update_task(instance=None, **kwargs):
+             task.status = status
+         repeatable = kwargs['form_data']['repeatable']
+         repeat_time = kwargs['form_data']['repeat_time']
++        app = kwargs['form_data']['app']
+         task.floor = floor
+         task.room = room
+         task.title = title
+@@ -117,6 +127,7 @@ def update_task(instance=None, **kwargs):
+         task.repeatable = repeatable
+         task.repeat_time = repeat_time
+         task.priority = priority
++        task.app = app
+         task.save()
+ 
+         try:
+diff --git a/taskq/templates/add_task.html b/taskq/templates/add_task.html
+index 922c26b..832c9dd 100644
+--- a/taskq/templates/add_task.html
++++ b/taskq/templates/add_task.html
+@@ -5,21 +5,13 @@
+ 
+     <div class="well well-lg">
+ 
+-        
++       
+         {%url add_task as add_task%}
+         <form method="POST" 
+-    {%comment%}
+-        enctype="multipart/form-data" 
+-    {%endcomment%}
+             class="form-horizontal" role="form" action="{{add_task}}">
+ 
+              {% csrf_token %}
+ 
+-{%comment%}
+-            <table>
+-            {{form.as_table}}
+-            </table>
+-{%endcomment%}
+ 
+ 
+             <div class="form-group">
+@@ -57,13 +49,19 @@
+                 </div>
+             </div>
+ 
+-            {% if request.user.is_superuser %}
++            {% if request.user.is_staff %}
+                 <div class="form-group">
+                     <label for="status" class="col-sm-2 control-label">Status</label>
+                     <div class="col-sm-10">
+                         {{form.status}}
+                     </div>
+                 </div>
++                <div class="form-group">
++                    <label for="app" class="col-sm-2 control-label">App Choices</label>
++                    <div class="col-sm-10">
++                        {{form.app}}
++                    </div>
++                </div>
+             {% endif %}
+ 
+ 
+@@ -118,7 +116,7 @@
+             });
+             $('#id_floor').change(function() {
+                 $.ajax({
+-                   url:'/getroom/' ,
++                   url:'/{{namespace}}/getroom/',
+                     type: 'get',
+                     data:({'id': $(this).val()}),
+                     success:function(data) {
+diff --git a/taskq/templates/edit_task.html b/taskq/templates/edit_task.html
+index 7d50084..1afd3c8 100644
+--- a/taskq/templates/edit_task.html
++++ b/taskq/templates/edit_task.html
+@@ -52,6 +52,13 @@
+                         {{form.status}}
+                     </div>
+                 </div>
++
++                <div class="form-group">
++                    <label for="app" class="col-sm-2 control-label">Move To App</label>
++                    <div class="col-sm-10">
++                        {{form.app}}
++                    </div>
++                </div>
+             {% endif %}
+ 
+             <div class="form-group">
+@@ -115,7 +122,7 @@
+             });
+             $('#id_floor').change(function() {
+                 $.ajax({
+-                   url:'/getroom/' ,
++                   url:'/{{namespace}}/getroom/',
+                     type: 'get',
+                     data:({'id': $(this).val()}),
+                     success:function(data) {
+diff --git a/taskq/urls.py b/taskq/urls.py
+index 37094ac..312b692 100644
+--- a/taskq/urls.py
++++ b/taskq/urls.py
+@@ -1,5 +1,6 @@
+ from django.conf.urls import patterns, url
+ from taskq import views
++from taskq.views import get_related_rooms
+ 
+ urlpatterns = patterns( '',
+     url(r'^$', views.task_list, name='task_list'),
+@@ -16,5 +17,6 @@ urlpatterns = patterns( '',
+     url(r'^other/$', views.other_list, name='other_list'),
+     #url(r'^other/$', OtherList.as_view(), name='other_list'),
+     url(r'^rtlog/$', views.repeat_task_log, name='repeat_task_log'),
++    url(r'^getroom/$', get_related_rooms, name='get_related_room'),
+ 
+ )
+diff --git a/taskq/views.py b/taskq/views.py
+index 958d627..07c0c3c 100644
+--- a/taskq/views.py
++++ b/taskq/views.py
+@@ -68,16 +68,21 @@ def add_task(request):
+     #    logger.info("permission denied,")
+     #    raise PermissionDenied
+ 
++    template = loader.get_template('add_task.html')
+     namespace=request.resolver_match.namespace
++    initial_dict={'priority':'4'}
+ 
+-    template = loader.get_template('add_task.html')
+-    form = TaskForm()
+     if request.user.is_superuser or request.user.is_staff or request.user.has_perm('taskq.add_task'):
+-        form = TaskAdminForm()
++        initial_dict.update({'app':namespace})
++        form = TaskAdminForm(initial=initial_dict)
++    else:
++        form = TaskForm(initial=initial_dict)
++
+     if request.method == "POST":
+-        form = TaskForm(request.POST)
+-        if request.user.is_superuser or request.user.is_staff or request.user.has_perm('taskq.add_task'):
++        if request.user.is_superuser or request.user.is_staff :
+             form = TaskAdminForm(request.POST)
++        else:
++            form = TaskForm(request.POST)
+ 
+         if form.is_valid():
+             data = {}
+@@ -87,6 +92,7 @@ def add_task(request):
+             data['desc'] = form.cleaned_data['desc']
+             data['priority'] = form.cleaned_data['priority']
+             data['status'] = 'P'
++
+             if request.POST.has_key('repeatable'):
+                 repeatable = True
+                 data['repeat_time'] = form.cleaned_data['repeat_time']
+@@ -95,12 +101,16 @@ def add_task(request):
+                 data['repeat_time'] = None
+             data['repeatable'] = repeatable
+ 
++            if request.user.is_superuser or request.user.is_staff:
++                data['app'] = form.cleaned_data['app']
++            else:
++                data['app'] = namespace
++
++
+             task = save_task(form_data=data)
++            task.cuser = request.user.id
+ 
+-            if request.user.is_authenticated():
+-                task.cuser = request.user.id
+-                task.app = request.resolver_match.namespace
+-                task.save()
++            task.save()
+ 
+             if repeatable:
+                 RTL = RepeatTaskLog.objects.create(task_id=task.id,\
+@@ -117,24 +127,19 @@ def add_task(request):
+                 error_msg = "Failed to save task to database."
+                 logger.error("Failed to save task to database.")
+                 messages.add_message(request, messages.ERROR, error_msg)
+-
+-            superusers = User.objects.filter(Q(is_superuser=0) \
+-                    & Q(is_staff=1))
+             if namespace=="infra":
+                 g=Group.objects.get(name="infra")
+                 email_list=[u.email for u in g.user_set.filter()]
+             else:
+                 g=Group.objects.get(name="housekeeper")
+                 email_list=[u.email for u in g.user_set.filter()]
+-            #email_list = superusers.values_list('email')
+-            #email_list = list(set(email_list))
+             for to in email_list:
+                 sub = "Fixit:%s New Task @%s-Floor" % (namespace,task.floor)
+                 #
+                 # comment out test automated mails.
+                 #
+                 desc=task.title + "\n\n" + task.desc
+-                send_postfix_mail(desc, sub, to[0])
++                send_postfix_mail(desc, sub, to)
+ 
+             #return HttpResponseRedirect(reverse('task_list'))
+             namespace=request.resolver_match.namespace
+@@ -206,8 +211,6 @@ def edit_task(request, task_id):
+ 
+     template = loader.get_template('edit_task.html')
+     task = TaskQ.objects.get(id=task_id)
+-    p=task.priority
+-
+     task_dict = {
+         'floor': task.floor,
+         'room': task.room,
+@@ -219,19 +222,25 @@ def edit_task(request, task_id):
+     }
+ 
+     if request.user.is_staff or request.user.is_superuser:
+-        task_dict.update({'status': task.status})
++        task_dict.update({'status': task.status,'app':task.app})
+         form = TaskAdminForm(initial=task_dict)
+ 
+-    if not request.user.is_staff and not request.user.is_superuser :
+-        form = TaskForm(initial=task_dict)
++    if not request.user.is_staff and not request.user.is_superuser:
++        if task.cuser == request.user.id:
++            form = TaskForm(initial=task_dict)
++        else:
++            form = TaskUpdateForm(initial=task_dict)
+ 
+ 
+ 
+     if request.method == "POST":
+         if request.user.is_staff or request.user.is_superuser:
+             form = TaskAdminForm(request.POST)
+-        else:
+-            form = TaskForm(request.POST)
++        if not request.user.is_staff and not request.user.is_superuser:
++            if task.cuser == request.user.id:
++                form = TaskForm(request.POST)
++            else:
++                form = TaskUpdateForm(request.POST)
+ 
+         if form.is_valid():
+             data = {}
+@@ -243,6 +252,10 @@ def edit_task(request, task_id):
+                 
+             if request.user.is_staff:
+                 data['status'] = form.cleaned_data['status']
++                data['app'] = form.cleaned_data['app']
++            else:
++                data['app'] = namespace 
++
+ 
+             if request.POST.has_key('repeatable'):
+                 repeatable = True
+@@ -259,10 +272,8 @@ def edit_task(request, task_id):
+             if request.user.is_staff:
+                 new_status = task.status
+ 
+-            if request.user.is_authenticated():
+-                task.euser = request.user.id
+-                task.app = request.resolver_match.namespace
+-                task.save()
++            task.euser = request.user.id
++            task.save()
+             if task.priority=='1':
+                 logger.debug('Task updated to blocker priority')
+ 
+@@ -465,7 +476,6 @@ def task_list(request):
+     This is main landing page. Home page.
+     """
+ 
+-    
+     template = loader.get_template('task_list.html')
+     namespace = request.resolver_match.namespace
+     p_tasks = TaskQ.objects.filter(app=namespace)
+@@ -735,8 +745,11 @@ def get_related_rooms(request):
+             rlist=[i for i in ROOM_CHOICES if i[0] in SF ]
+         elif fl=='3':    
+             rlist=[i for i in ROOM_CHOICES if i[0] in TF ]
+-        elif fl=='4':    
+-            rlist=[i for i in ROOM_CHOICES if i[0] in PF ]
++        elif fl=='4':
++            if request.resolver_match.namespace == "infra":
++                rlist=[('14', 'Battery Room')]   
++            else: 
++                rlist=[i for i in ROOM_CHOICES if i[0] in PF ]
+         elif fl=='5':    
+             rlist=[i for i in ROOM_CHOICES if i[0] in All ]
+         else:
+diff --git a/templates/base.html b/templates/base.html
+index c131729..412df14 100644
+--- a/templates/base.html
++++ b/templates/base.html
+@@ -82,13 +82,17 @@ div#footer-fixit{
+ 
+     <li id="harrybrand" role="presentation">
+         <a href="{% namespace_url namespace "task_list" %}" class="dropdown-toggle brand" data-toggle="dropdown">
+-            <h5 style="color:white">{{namespace|capfirst}} &nbsp<span class="caret"></span>&nbsp</h5></a>
++        {%if namespace == 'housekeep' %}
++            <h5 style="color:white">Housekeeping &nbsp<span class="caret"></span>&nbsp</h5></a>
++        {% else %}
++            <h5 style="color:white">Infrastructure &nbsp<span class="caret"></span>&nbsp</h5></a>
++        {%endif %}
+         
+         <ul class="dropdown-menu" style="background-color: #3f9fd9";>
+         {%if namespace == 'housekeep' %}
+-            <li><a href="{% namespace_url "infra" "task_list" %}">Infra</a></li>
++            <li><a href="{% namespace_url "infra" "task_list" %}">Infrastructure</a></li>
+         {% else %}
+-            <li><a href="{% namespace_url "housekeep" "task_list" %}">Fixit</a></li>
++            <li><a href="{% namespace_url "housekeep" "task_list" %}">Housekeeping</a></li>
+         {%endif %}
+         </ul>
+     </li>

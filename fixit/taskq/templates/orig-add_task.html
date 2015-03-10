@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+    <div class="well well-lg">
+
+        
+        {%url add_task as add_task%}
+        <form method="POST" 
+    {%comment%}
+        enctype="multipart/form-data" 
+    {%endcomment%}
+            class="form-horizontal" role="form" action="{{add_task}}">
+
+
+            <table>
+            {{form.as_table}}
+            </table>
+
+{%comment%}
+
+
+            <div class="form-group">
+                <label for="floor" class="col-sm-2 control-label">Floor Number</label>
+                <div class="col-sm-12">
+
+
+                    <input type="floor" class="form-control" id="id_floor" placeholder="Enter Floor Number">
+                </div>
+            </div>
+
+            <div class="form-group">
+            <!--
+                <label for="room" class="col-sm-2 control-label">Room Number</label>
+            -->
+                <div class="col-sm-12">
+                    <input type="room" class="form-control" id="id_room" placeholder="Enter Room Number">
+                </div>
+            </div>
+
+            <div class="form-group">
+            <!--
+                <label for="desc" class="col-sm-2 control-label">Description</label>
+            -->
+                <div class="col-sm-12">
+                    <textarea id="id_desc" class="form-control" name="desc" class="mceBasic"
+                        rows="16" cols="80" placeholder="Describe the Task">{{desc}}</textarea>
+                </div>
+            </div>
+
+            <div class="form-group">
+            <!--
+                <label for="level" class="col-sm-2 control-label">Level</label>
+            -->
+                <div class="col-sm-12">
+                    <input type="level" class="form-control" id="id_level" placeholder="Task Urgency Level">
+                </div>
+            </div>
+
+{%endcomment%}
+
+
+            {%comment%}
+            <div class="control-group">
+                <span class="control-label-left">
+                    Task Status  
+                    <span class="pull-right">:&nbsp;</span>
+                </span>
+                <div class="controls">
+                    <input type="text" 
+                        class="valignTop" name="room" id="id_room" value={{room}}>
+                </div>
+            </div>
+            <br/>
+            {%endcomment%}
+
+
+{%comment%}
+            <div class="form-group">
+            <!--
+                <label for="submit" class="col-sm-2 control-label"></label>
+            -->
+                <div class="col-sm-12">
+                    <input type="submit" name="submit" value="Create Task" 
+                        class="btn btn-primary" />
+                </div>
+            </div>
+
+{%endcomment%}
+
+            <br/><br/>
+        </form>
+    </div>
+
+{% endblock content %}

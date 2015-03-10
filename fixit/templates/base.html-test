@@ -1,0 +1,142 @@
+{%load common_tags %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fix!t</title>
+
+    <!-- Bootstrap -->
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{STATIC_URL}}/css/jquery-clockpicker.min.css" rel="stylesheet">
+    <link href="{{STATIC_URL}}/css/support.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="{{STATIC_URL}}js/html5shiv.min.js"></script>
+      <script src="{{STATIC_URL}}js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+
+    <!--<div class="navbar navbar-fixed-top"> -->
+    <div class="navbar">
+        <div class="navbar-inner">
+            <div class="container">
+                <div class="col-xs-2 col-sm-2">
+                    <h1 class="pull-left"><a id="brand" href="{%url 'task_list'%}">Fixit</a></h1>  
+                </div>
+
+                <div class="col-xs-8 col-sm-8 col-xs-offset-2 col-sm-offset-2">
+                    {%show_admin_user%}                    
+                </div>
+            </div>
+        </div>
+    </div>
+   
+    <div class="container">
+        <ul class="nav nav-tabs" >
+            <li role="presentation" id="task-list" {%if active == 'tasklist' %} class="active" {%endif%} >
+                <a  href="{%url 'task_list'%}">
+                <span class="glyphicon glyphicon-list"></span> Pending <span class="badge">{%show_pending_cnt%}</span></a>
+            </li>
+            <li role="presentation" id="complete-list" {%if active == 'ctasklist' %} class="active" {%endif%} >
+                <a  href="{%url 'completed_list'%}">
+                <span class="glyphicon glyphicon-ok"></span> Completed <span class="badge">{%show_complete_cnt%}</span></a>
+            </li>
+            <li role="presentation" id="other-list" {%if active == 'otherlist' %} class="active" {%endif%} >
+                <a  href="{%url 'other_list'%}">
+                <span class="glyphicon glyphicon-ban-circle"></span> Other <span class="badge">{%show_other_cnt%}</span></a>
+            </li>
+            <li role="presentation"  {%if active == 'addtask' %} class="active" {%endif%}  >
+                <a href="{%url 'add_task'%}">
+                <span class="glyphicon glyphicon-plus"></span> Add</a>
+            </li>
+            {% if request.user.is_superuser %}
+                <li role="presentation"  {%if active == 'rtlog' %} class="active" {%endif%}  >
+                    <a href="{%url 'repeat_task_log'%}">
+                    <span class="glyphicon glyphicon-book"></span> Repeat Logs</a>
+                </li>
+            {%endif%}
+        </ul> 
+    </div>
+
+    <div class="container main-div">
+        <div class="row">
+            <div class="col-xs-12 col-sm-12">
+                <br/> 
+                {% if messages %}
+                    {% for message in messages %}
+                        <div {% if message.tags %}
+                            class="alert alert-{{ message.tags }}"{% endif %}>
+                            {%if message.tags == 'error'%}
+                                <span class="glyphicon glyphicon-remove-circle"></span> 
+                            {%elif message.tags == 'danger'%}
+                                <span class="glyphicon glyphicon-remove-circle"></span> 
+                            {%elif message.tags == 'success'%}
+                                <span class="glyphicon glyphicon-ok-sign"></span> 
+                            {%elif message.tags == 'info'%}
+                                <span class="glyphicon glyphicon-info-sign"></span> 
+                            {%elif message.tags == 'warning'%}
+                                <span class="glyphicon glyphicon-question-sign"></span> 
+                            {%endif%}
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                    <br/>
+                {% endif %}
+
+{%comment%}
+                <div class="tab-content">
+                    <div class="tab-pane">
+{%endcomment%}
+
+                        {% block content %}
+                            <h1>Hello, world!</h1>
+                        {% endblock content %}
+{%comment%}
+                    </div>
+                </div>
+{%endcomment%}
+
+
+        </div>
+    </div>
+
+
+
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-4 col-sm-4 col-xs-offset-8 col-sm-offset-8">
+                    <p style="margin-top:25px;">
+                        2014-2015, Coriolis Technologies Pvt. Ltd.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="{{STATIC_URL}}js/jquery-1.11.1.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap.min.js"></script>
+    <script src="{{STATIC_URL}}js/jquery-clockpicker.min.js"></script>
+
+    {% block common_js %}
+        <script type="text/javascript">
+            $(document).ready(function(){
+            });
+
+        </script>
+    {% endblock common_js%}
+
+    {% block extra_js %}
+    {% endblock extra_js%}
+
+  </body>
+</html>

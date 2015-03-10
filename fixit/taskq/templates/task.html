@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+    <div class="well well-lg">
+
+        <div class="jumbotron">
+            <div class="panel panel-default">
+                <!-- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;      
+                <blockquote>
+                -->
+                <h4 style="color:green;">
+                    &nbsp;&nbsp;
+                    {{heading}}
+                </h4>
+            </div>
+        </div>
+
+        <div class="jumbotron">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    {{task.desc}}
+                </div>
+            </div>
+
+            <br/>
+            Priority:
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    {{priority}}
+                </div>
+            </div>
+
+            <br/>
+            Status:
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    {{status}}
+                </div>
+            </div>
+        </div>
+        <br/>
+
+    </div>
+
+{% endblock content %}
+
+

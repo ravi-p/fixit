@@ -1,0 +1,238 @@
+{%load common_tags %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fix!t</title>
+
+    <!-- Bootstrap -->
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{STATIC_URL}}/css/jquery-clockpicker.min.css" rel="stylesheet">
+    <link href="{{STATIC_URL}}/css/support.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="only screen and (max-device-width: 780px)" href="{{ STATIC_URL }}css/max-device-width-780px.css" />
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="{{STATIC_URL}}js/html5shiv.min.js"></script>
+      <script src="{{STATIC_URL}}js/respond.min.js"></script>
+    <![endif]-->
+<style>
+
+@media screen and (max-width: 480px) {
+
+   /* input[name="search"] {
+       width: 200px;
+    } 
+    panel-heading > span::after{
+    font-family: "Glyphicons Halflings";
+    content: "\e003";
+    padding-left:10px;
+    border:1px solid #021a40;
+    }*/   
+   /* $("#my_act").append("<span> - 2nd!</span>"); */
+
+body { 
+font-size:12px;
+}
+
+
+#ptask-div{ }
+.container {
+padding-right: 0px;
+padding-left: 0px;
+}
+
+.well{ padding:0px;}
+
+.navbar {
+margin-bottom: 0px;
+}
+
+div#footer-fixit{
+    position:fixed;
+    max-height: 50px;
+    bottom:0px;
+    left:0px;
+    right:0px;
+    margin-bottom:0px;
+}
+#myNavbar{
+ padding:0px;
+}
+
+}
+</style>
+
+
+  </head>
+  <body>
+
+  <nav class="navbar navbar-inverse fixed-top">
+  <div class="container">
+    <div class="navbar-header">
+            <li class="dropdown" style="padding:15px;" id="siteName">
+              <a href="{% namespace_url namespace "task_list" %}" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="true" style="color:#FFF"; >
+                    {%if namespace == 'housekeep' %}
+                        Housekeeping 
+                    {% else %}
+                        Infrastructure
+                    {%endif %}
+               <span class="caret"></span></a>
+
+              <ul class="dropdown-menu" role="menu">
+                    {%if namespace == 'housekeep' %}
+                        <li><a href="{% namespace_url "infra" "task_list" %}">Infrastructure</a></li>
+                    {% else %}
+                        <li><a href="{% namespace_url "housekeep" "task_list" %}">Housekeeping</a></li>
+                    {%endif %}
+              </ul>
+            </li>
+
+      <button id="mybtn" type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>                        
+      </button>
+    </div><!-- navbar header -->
+
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+        <li role="presentation" id="task-list"  {%if active == 'tasklist' %} class="active" {%endif%} >
+                <a  href="{% namespace_url namespace "task_list" %}">
+                <span class="glyphicon glyphicon-list"></span> Pending <span class="badge">{%show_pending_cnt%}</span></a>
+        </li>
+        <li role="presentation" id="complete-list" {%if active == 'ctasklist' %} class="active" {%endif%} >
+                <a  href="{% namespace_url namespace "completed_list" %}">
+                <span class="glyphicon glyphicon-ok"></span> Completed <span class="badge">{%show_complete_cnt%}</span></a>
+        </li>
+        <li role="presentation" id="other-list" {%if active == 'otherlist' %} class="active" {%endif%} > 
+                <a  href="{% namespace_url namespace "other_list" %}">
+                <span class="glyphicon glyphicon-ban-circle"></span> Other <span class="badge">{%show_other_cnt%}</span></a>
+        </li>
+
+            <li role="presentation"  {%if active == 'addtask' %} class="active" {%endif%}  >
+                <a href="{% namespace_url namespace "add_task" %}">
+                <span class="glyphicon glyphicon-plus"></span> Add</a>
+            </li>
+            {% if request.user.is_superuser %}
+                <li role="presentation"  {%if active == 'rtlog' %} class="active" {%endif%}  >
+                    <a href="{% namespace_url namespace "repeat_task_log" %}">
+                    <span class="glyphicon glyphicon-book"></span> Repeat Logs</a>
+                </li>
+            {%endif%}
+
+      </ul>
+      <ul id="uspace" class="nav navbar-nav navbar-right">
+        {% if request.user.is_authenticated %}
+            <div style="color:#FFF;test-decoration:none;margin-top:10px;margin-bottom:5px;" id="userspace">
+                <a href="#" style="color:#FFF;">
+                    <span class="glyphicon glyphicon-user"></span>
+                    {{request.user.username|upper}}
+                </a>
+                <span>&nbsp;|&nbsp;</span>
+
+                {% url "admin_logout" as admin_logout %}
+                <span class="pull-right glyphicon glyphicon-off"></span>
+                <a href="{{admin_logout}}" style="color:#FFF;test-decoration:none;margin-top:10px;margin-bottom:5px;" title="LOGOUT">LOGOUT</a>
+            </div>
+        {% else %}
+            <h5>
+            <a href="/login/google-oauth2/?next={{request.get_full_path}}">
+                <span class="pull-right" style="color:#FFF;test-decoration:none;margin-top:10px;margin-bottom:5px;"><i>G+ Login</i> </span>
+            </a>
+            </h5>
+        {% endif %}
+
+      </ul>
+    </div><!-- navbar collapse -->
+  </div> <!-- navbar container -->
+</nav>
+
+
+
+    <div class="container main-div">
+        <div class="row">
+            <div class="col-xs-12 col-sm-12">
+                <br/> 
+                {% if messages %}
+                    {% for message in messages %}
+                        <div {% if message.tags %}
+                            class="alert alert-{{ message.tags }}"{% endif %}>
+                            {%if message.tags == 'error'%}
+                                <span class="glyphicon glyphicon-remove-circle"></span> 
+                            {%elif message.tags == 'danger'%}
+                                <span class="glyphicon glyphicon-remove-circle"></span> 
+                            {%elif message.tags == 'success'%}
+                                <span class="glyphicon glyphicon-ok-sign"></span> 
+                            {%elif message.tags == 'info'%}
+                                <span class="glyphicon glyphicon-info-sign"></span> 
+                            {%elif message.tags == 'warning'%}
+                                <span class="glyphicon glyphicon-question-sign"></span> 
+                            {%endif%}
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                    <br/>
+                {% endif %}
+
+{%comment%}
+                <div class="tab-content">
+                    <div class="tab-pane">
+{%endcomment%}
+
+                        {% block content %}
+                            <h1>Hello, world!</h1>
+                        {% endblock content %}
+{%comment%}
+                    </div>
+                </div>
+{%endcomment%}
+
+
+        </div>
+    </div>
+
+
+
+    <div class="footer" id="footer-fixit" role="contentinfo">
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-4 col-sm-4">
+                    <img src="{{ STATIC_URL }}fonts/ajax-loader2.gif" id="load_animation" style="display:none">
+                </div>
+                <div class="col-xs-8 col-sm-8 ">
+                    <p style="margin-top:25px;">
+                        2014-2015, Coriolis Technologies Pvt. Ltd.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="{{STATIC_URL}}js/jquery-1.11.1.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap.min.js"></script>
+    <script src="{{STATIC_URL}}js/jquery-clockpicker.min.js"></script>
+
+    {% block common_js %}
+        <script type="text/javascript">
+            $(document).ready(function(){
+            });
+
+        </script>
+    {% endblock common_js%}
+
+    {% block extra_js %}
+    {% endblock extra_js%}
+
+    {% block css %}
+    {% endblock css %}
+
+  </body>
+</html>

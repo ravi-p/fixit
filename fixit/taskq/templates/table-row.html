@@ -1,0 +1,32 @@
+{%for  task in xtasks%}
+    <!-- <tr>  -->
+    <tr {%if task.repeatable %} style="border-left: solid blue 2px;"{%endif%} class="ticket" >
+{%comment%}
+        <td>{{forloop.counter|add:ctask_list.next_page_number}}.</td>
+        <td>
+            {%time_required task.id %}
+
+            {% if task.repeatable %}
+                &nbsp;
+                <span class="glyphicon glyphicon-repeat"
+                    title="">
+                </span>
+            {%endif%}
+
+        </td>
+{%endcomment%}
+
+        <td> {{ task.get_floor_display }} =&gt; {{ task.get_room_display }} </td>
+        <td title="{{task.desc}}"> {{task.desc|truncatechars:60}} </td>
+        <td style='color:green;'> {{ task.get_priority_display }}</td>
+        <td>{{ task.get_status_display }}</td>
+
+        {%if request.user.is_superuser or request.user.is_staff%}
+            <td>
+                <a href="{%url 'edit_task' task.id%}">Edit Task</a>
+                &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+                <a title="Mark as pending." href="{%url 'mark_task_pending' task.id%}">Pending</a>
+            </td>
+        {%endif%}
+    </tr>    
+{%endfor%}

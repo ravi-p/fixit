@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{%load common_tags%}
+
+{% block content %}
+<!-- ++++++++++++++++ other tasks  ++++++++++++++++++  --> 
+
+    <div class="well well-lg" id="ctask-div">
+        {%if xtasks%}
+            <input type="hidden" id="uri" name="variable" value="{{target}}">
+            <table class="table table-condensed" id="task-list-table">
+                <thead>
+                    <th width="15%" class="sortable">
+                        <a href="{% namespace_url namespace 'other_list' %}?sort_by=location&order={% ifequal s_order 'ASC' %}DESC{%else%}ASC{%endifequal%}"></a><b>Location</b>
+                        {%if sort_by == "location" %}
+                            {% if s_order == "ASC" %}
+                                <img src="{{ STATIC_URL }}fonts/ice-asc.gif" class="pull-right">
+                            {% else %}
+                                <img src="{{ STATIC_URL }}fonts/ice-desc.gif" class="pull-right">
+                            {%endif%}
+                        {%else%}
+                                <img src="{{ STATIC_URL }}fonts/ice-unsorted.gif" class="pull-right">
+                    {%endif%}
+                    </th>
+                    <th width="42%"><b>Title</b></th>
+                    <th width="8%" class="sortable">
+                        <a href="{% namespace_url namespace 'other_list' %}?sort_by=priority"></a><b>Priority</b>
+                        {%if sort_by == "priority" %}
+                            <img src="{{ STATIC_URL }}fonts/ice-asc.gif" class="pull-right">
+                        {%else%}
+                            <img src="{{ STATIC_URL }}fonts/ice-unsorted.gif" class="pull-right">
+                        {%endif%}
+                    </th>    
+    
+                    <th width="12%"><b>Status</b></th>
+                    <th><b>Actions</a></th>
+                    {%if request.user.is_superuser or request.user.is_staff%}
+                    {%endif%}
+                </thead>
+            </table>
+
+            <div id="divtablecontent" onscroll="scrollalert()">
+                <table class="table table-bordered" id="full-table">
+                    <tbody id="table-body">
+                    {% include 'other_list_table_row.html' %}
+                    </tbody>
+                </table>
+                <br/><br/>
+            </div>
+            <br/>
+    {%else%}
+            No complete tasks found.
+    {%endif%}
+    </div>
+
+{% endblock content %}
+
+
+{% block extra_js %}
+    <script src="{{STATIC_URL}}js/custom.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function(){
+        $("tr").dblclick(function(){ 
+           var taskid = this.id;
+           window.location = "/{{namespace}}/" + taskid; 
+        });
+
+
+    });
+    </script>
+{% endblock extra_js %}

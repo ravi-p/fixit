@@ -1,0 +1,109 @@
+
+html, body {    
+    height: 100%;
+    /*padding-top: 36px; */
+}
+
+body {
+    border-top: 5px solid green; /*#01DF01;*/
+}
+
+div.main-div {
+    min-height: 80%;
+}
+
+div.navbar {
+    background-color: #30ADD1;
+    color: #FFF;
+    font-weight: bold;
+}
+
+div.footer {
+    background-color:#3f9fd9;
+    min-height: 20px;
+    color: #FFF;
+}
+
+form.form-inline {
+    margin-top: 10px;
+}
+
+a,
+a:hover{ 
+    text-decoration: none;
+}
+
+a#brand {
+    font-weight: bold;
+    color: #FFF;
+}
+
+
+/* override bootstrap css */
+.alert {
+    padding: 2px;
+    margin-bottom: 3px;
+}
+
+/* copy bootstrap danger css to error class */
+.alert-error {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+}
+
+
+
+.bg-blocker {
+    color:   #B40404;
+}
+
+.bg-high {
+    color: #DF0101;
+}
+
+.bg-moderate {
+    color: #FE2E2E;
+}
+
+.bg-low {
+    color: #0080FF;
+}
+
+.sortable{
+    cursor: pointer;
+}
+
+.sortable:hover{
+    color: blue;
+}
+
+
+/* task listing page */
+
+div#ptask-div,
+div#ctask-div {
+    height: 500px;
+}
+
+div#divtablecontent{
+    height: 400px; 
+    overflow-y:auto; 
+}
+table#task-list-table{
+     margin-bottom:0px;
+     margin-top:0px;
+}
+
+
+#harrybrand .dropdown-menu{
+left:350px;
+}
+
+tr{
+    cursor:pointer;
+}
+
+
+
+

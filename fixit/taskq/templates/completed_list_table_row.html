@@ -1,0 +1,63 @@
+{%load common_tags%}
+
+{%for  task in c_tasks%}
+    <tr id={{task.id}} {%if task.repeatable %} style="border-left: solid blue 2px;"{%endif%}>
+        <td width="10%">
+            <small>
+                {% if task.repeatable %}
+                    &nbsp;
+                    <span class="glyphicon glyphicon-repeat"
+                        style="color:blue; font-weight:bold;"
+                        title="">
+                    </span> &nbsp;
+                {%endif%}
+                {%time_required task.id %}
+            </small>
+
+        </td>
+        <td width="15%">
+            <small>
+                {% show_location task%}
+            </small>
+        </td>
+        <td width="42%" title="{{task.desc}}">
+            {#{task.desc|truncatechars:60}#}
+            <small>
+                {% if task.title %} {{task.title}}
+                {% else %} {{task.desc}}
+                {%endif%}
+            </small>
+        </td>
+        <td width="8%" style='color:green;'>
+            <small>
+                {% show_priority task%}
+            </small>
+        </td>
+        <td width="">
+            <!-- Edit link -->
+
+            <a href="{% namespace_url namespace 'edit_task' task.id%}">
+            <span title="Edit" class="glyphicon glyphicon-pencil"></span></a>
+                &nbsp; | &nbsp;
+                <!-- Pending link -->
+                <a title="Mark as pending." href="{% namespace_url namespace 'mark_task_pending' task.id%}">
+                    <span title="Pending" class="glyphicon glyphicon-remove"></span></a>
+
+                <!-- Delete link -->
+                {%if request.user.is_superuser%}
+                    &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+                    <a id="id-del-task" href="{% namespace_url namespace 'delete_task' task.id%}">
+                    <span title="Delete" class="glyphicon glyphicon-trash"></span></a>
+                {%endif%}
+            {%if task.cuser%}
+                &nbsp; | &nbsp;
+                <span title="Reporter: {%get_task_cuser task%}" class="glyphicon glyphicon-user"></span>
+            {%endif%}
+            {%if task.euser%}
+                &nbsp; | &nbsp;
+                <span title="Last Edited: {%get_task_euser task%}" class="glyphicon glyphicon-eye-open"></span>
+            {%endif%}
+        </td>
+    </tr>         
+{%endfor%}
+

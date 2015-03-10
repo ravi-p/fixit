@@ -1,0 +1,25 @@
+
+{% if is_auth %}
+    <div style="color:#FFF;test-decoration:none;margin-top:10px;margin-bottom:5px;" id="userspace">
+        <a href="#" style="color:#FFF;">
+            <span class="glyphicon glyphicon-user"></span>
+            {{username|upper}}
+        </a>
+        <span>&nbsp;|&nbsp;</span>
+
+        {% url "admin_logout" as admin_logout %}
+        <span class="glyphicon glyphicon-off"></span>
+        <a href="{{admin_logout}}" style="color:#FFF;" title="LOGOUT">LOGOUT</a>
+    </div>
+{% else %}
+    <h5>
+    <a href='{% url "socialauth_begin" "google-oauth2" %}?next={{request.get_full_path}}' >
+        <span class="pull-right" 
+            style="color:#FFF;test-decoration:none;margin-top:10px;margin-bottom:5px;"><i>G+ Login</i> </span>
+    </a>
+    </h5>
+
+
+
+{% endif %}
+

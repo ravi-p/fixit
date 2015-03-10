@@ -1,0 +1,85 @@
+{%load common_tags%}
+
+{%if p_tasks %}
+
+{%for  task in p_tasks%}
+    <tr id={{task.id}} {%if task.repeatable %} style="border-left: solid blue 2px;" 
+        {%elif task.status == 'I'%} style="border-left: solid green 2px;"
+        {%endif%}>
+
+        <td width="10%">
+            <small>
+                {% if task.repeatable %}
+                    &nbsp;
+                    <span class="glyphicon glyphicon-repeat"
+                        style="color:blue; font-weight:bold;"
+                        title="Timeout: {{task.repeat_time}}">
+                    </span>&nbsp;
+                    {%repeat_timesince task.id %}
+                {% else %}
+                    {%pending_timesince task.id %}
+                {%endif%}
+            </small>
+        </td>
+        <td width="15%">
+            <small>
+                {% show_location task%}
+            </small>
+        </td>
+        <td width="42%" title="{{task.desc}}">
+            {#{task.desc|truncatechars:60}#}
+            <small>
+                {% if task.title %} {{task.title}}
+                {% else %} {{task.desc}}
+                {%endif%}
+            </small>
+        </td>
+        <td width="8%" {%if task.status == 'I' %}
+                style='background:#BEF781;' title="In-Progress"{%endif%}>
+            <small>
+                {% show_pending_priority task %} 
+            </small>
+        </td>
+        <td width="">
+                <!-- Edit link -->
+                &nbsp;  
+                <a href="{% namespace_url namespace "edit_task" task.id %} ">
+                <span title="Edit" class="glyphicon glyphicon-pencil"></span></a>
+            {% if request.resolver_match.namespace == 'infra' %} 
+                {% if 'taskq.done_task_infra' in request.user.get_all_permissions %}
+                <!-- Done link -->
+                &nbsp;  
+                <a title="Mark as done." href="{% namespace_url namespace "mark_task_complete" task.id %}">
+                <span title="Done" class="glyphicon glyphicon-ok"></span></a>
+                {%endif%}
+            {%else%}
+                {% if 'taskq.done_taskq' in request.user.get_all_permissions %}
+                <!-- Done housekeep link -->
+                &nbsp;  
+                <a title="Mark as done." href="{% namespace_url namespace "mark_task_complete" task.id %}">
+                <span title="Done" class="glyphicon glyphicon-ok"></span></a>
+                {%endif%}
+               
+            {%endif%}
+             {% if 'taskq.delete_taskq' in request.user.get_all_permissions %}
+                <!-- Delete link -->
+                 &nbsp; 
+                 <a id="id-del-task" href="{% namespace_url namespace "delete_task" task.id %}">
+                 <span title="Delete" class="glyphicon glyphicon-trash"></span></a>
+             {%endif%}
+            {%if task.cuser%}
+                &nbsp; 
+                <span title="Reporter: {%get_task_cuser task%}" class="glyphicon glyphicon-user"></span>
+            {%endif%}
+            {%if task.euser%}
+                &nbsp; 
+                <span title="Last Edited: {%get_task_euser task%}" class="glyphicon glyphicon-eye-open"></span>
+            {%endif%}
+
+        </td>
+    </tr>         
+{%endfor%}
+{%else%}
+<br><strong> No Pending Request.</strong>
+{%endif%}
+
